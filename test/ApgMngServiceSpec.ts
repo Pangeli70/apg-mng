@@ -1,5 +1,5 @@
 import {
-    Bson, MongoClient, MongoDatabase, MongoCollection, FindOptions, CountOptions
+    Bson, MongoDatabase, MongoCollection, FindOptions, CountOptions, DotEnv
 } from "../deps.ts";
 
 import {
@@ -7,39 +7,12 @@ import {
     TApgMngMultipleInsertResult,
     IApgMngUpdateManyResult,
     IApgMngUpdateOneResult,
-    ApgMngService
+    ApgMngService,
+    ApgMngLocalService,
+    ApgMngAtlasService
 } from "../mod.ts"
-import { ApgTestsSpecable } from "../../Tests/mod.ts";
 
-type InsertResult =
-    { $oid: string } |
-    Bson.ObjectId |
-    undefined;
 
-type MultipleInsertResult =
-    {
-        insertedIds: InsertResult[],
-        insertedCount: number
-    } |
-    undefined;
-
-interface ISingleUpdateResult {
-
-    upsertedId: Bson.ObjectId | undefined;
-    upsertedCount: number;
-    matchedCount: number;
-    modifiedCount: number;
-
-}
-
-interface IMultipleUpdateResult {
-
-    upsertedIds: Bson.ObjectId[] | undefined;
-    upsertedCount: number;
-    matchedCount: number;
-    modifiedCount: number;
-
-}
 
 // Defining schema interface
 interface ApgUserSchema {
@@ -52,67 +25,51 @@ interface ApgUserSchema {
 type ApgUsersDbCollection = MongoCollection<ApgUserSchema>;
 
 
-const envVars = {
-    u: "APG",
-    p: "Fabi-1175"
-}
+export class ApgMngServiceSpec {
 
-// Set connection to Local Database or Atlas
-const IS_MONGO_DB_ATLAS = true;
+    // Special find options settings if we are using Atlas
+    private _findOptions: FindOptions = {};
 
-// Special find options settings if we are using Atlas
-const MONGO_DB_FIND_OPTIONS: FindOptions = IS_MONGO_DB_ATLAS ? { noCursorTimeout: false } : {};
+    async test(alocal: boolean) {
 
-
-export class ApgMngDataServiceSpec extends ApgTestsSpecable {
-
-    async testMongo() {
+        const env = DotEnv.config()
 
         const log: string[] = [];
+        const dbName = "test";
 
-        const dbClient = new MongoClient();
-
-        // Connections status to the Mongo Database
-        // const mongoDBConnected = await connectToDatabase(client, log);
-
-        ApgMngService.SetupAtlasConnection(
-            "apgmongodbatlas-shard-00-02.okfw3.mongodb.net",
-            envVars.u,
-            envVars.p,
-            "ApgSisalMongoDb"
-        );
-
-        const res = await ApgMngService.InitClient(dbClient);
-        let mongoDBConnected = res.ok;
-
-        if (!mongoDBConnected) {
-            log.push("Mongo DB Atlas NOT connected!!! Check atlas service")
-            ApgMngService.SetupLocalConnection(
-                "ApgSisalMongoDb"
-            );
-
-            const res = await ApgMngService.InitClient(dbClient);
-            mongoDBConnected = res.ok;
-
-            if (!mongoDBConnected) {
-
-                log.push("testMongo error: Mongo DB not connected");
-                return log;
-            } else {
-
-                log.push("Mongo DB Local connected")
-            }
-        } else {
-
-            log.push("Mongo DB Atlas connected")
+        let service: ApgMngService;
+        if (alocal) {
+            service = new ApgMngLocalService(dbName)
+            log.push("Mongo DB Local connecting")
+        }
+        else {
+            service = new ApgMngAtlasService(
+                dbName,
+                env.atlasShard,
+                env.user,
+                env.password,
+            )
+            log.push("Mongo DB Atlas connecting")
+            this._findOptions = { noCursorTimeout: false };
         }
 
-        let db: MongoDatabase | undefined = undefined;
-        let users: ApgUsersDbCollection | undefined = undefined;
+        await service.initializeConnection();
+
+        const mongoDBConnected = service.Status.Ok;
+
+        if (!mongoDBConnected) {
+            log.push("testMongo error: Mongo DB not connected");
+            return log;
+        } else {
+            log.push("Mongo DB connected")
+        }
+
+        let db: MongoDatabase | null = null;
+        let users: ApgUsersDbCollection | null = null;
 
         if (mongoDBConnected) {
-            db = dbClient.database("TS2");
-            users = db.collection<ApgUserSchema>("Users");
+            db = service.Database;
+            users = db!.collection<ApgUserSchema>("users");
         }
 
         if (users == undefined) {
@@ -180,77 +137,6 @@ export class ApgMngDataServiceSpec extends ApgTestsSpecable {
         return log;
     }
 
-
-    async connectToDatabase(
-        aclient: MongoClient,
-        alog: string[]
-    ): Promise<boolean> {
-
-        let r = false;
-
-        if (IS_MONGO_DB_ATLAS) {
-            //Connecting to an Atlas Database
-            try {
-
-                const dbName = "ApgSisalMongoDb";
-                const authMechanism = "SCRAM-SHA-1";
-
-                // Connect using Connection string: verified 20220623
-                // const protocol = "mongodb+srv";
-                // const altlasClusterUrl = "apgmongodbatlas.okfw3.mongodb.net";
-                //const connectionString = `${protocol}://${envVars.u}:${envVars.p}@${altlasClusterUrl}/${dbName}?authMechanism=${authMechanism}`;
-                // await aclient.connect(connectionString);
-
-                // await aclient.connect("mongodb+srv://APG:Fabi-1175@apgmongodbatlas.okfw3.mongodb.net/ApgSisalMongoDb?authMechanism=SCRAM-SHA-1");
-
-                // Connect using config object: verified 20220623
-                // Verify On Atlas website and not using compass which is the primary
-                const primaryShardNode = "apgmongodbatlas-shard-00-02.okfw3.mongodb.net"
-                await aclient.connect({
-                    db: dbName,
-                    tls: true,
-                    servers: [
-                        {
-                            // THIS MUST BE PRIMARY MASTER SHARD NODE!!!!
-                            host: primaryShardNode,
-                            port: 27017,
-                        },
-                    ],
-                    credential: {
-                        username: envVars.u,
-                        password: envVars.p,
-                        db: dbName,
-                        mechanism: authMechanism
-                    },
-                });
-                r = true;
-            } catch (e) {
-                alog.push("Mongo DB Atlas connection error: " + e);
-            }
-        }
-        else {
-            //Connecting to a Local Database
-            try {
-                /*await client.connect("mongodb://127.0.0.1:27017");*/
-                await aclient.connect({
-                    db: "TS2",
-                    tls: false,
-                    servers: [
-                        {
-                            host: "127.0.0.1",
-                            port: 27017,
-                        },
-                    ],
-                });
-                r = true;
-            } catch (e) {
-                alog.push("Mongo DB Local connection error: " + e);
-            }
-        }
-        return r;
-    }
-
-
     async insertUserTest(
         ausers: ApgUsersDbCollection,
         alog: string[]
@@ -317,7 +203,7 @@ export class ApgMngDataServiceSpec extends ApgTestsSpecable {
         try {
 
             r = await ausers
-                .findOne({ _id: userId }, MONGO_DB_FIND_OPTIONS);
+                .findOne({ _id: userId }, this._findOptions);
             if (r) {
                 alog.push("Find one by ID result: " + r.username);
             }
@@ -456,7 +342,7 @@ export class ApgMngDataServiceSpec extends ApgTestsSpecable {
 
         try {
             r = await ausers
-                .find({}, MONGO_DB_FIND_OPTIONS)
+                .find({}, this._findOptions)
                 .toArray();
             alog.push("Find all result: " + r!.length);
         } catch (e) {

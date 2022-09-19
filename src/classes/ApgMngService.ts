@@ -29,6 +29,10 @@ export abstract class ApgMngService {
     return this.mongoDbFindOptions;
   }
 
+  get Status() {
+    return this.status;
+  }
+  
   get DbName() {
     return this.dbName;
   }

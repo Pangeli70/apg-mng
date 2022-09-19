@@ -64,7 +64,7 @@ export class ApgMngLocalService extends ApgMngService {
     if (!this.status.Ok) return this.status;
 
     this.mongoDb = mongoDBClient.database(this.dbName);
-    this.status = Rst.ApgRstAssert.isUndefined(
+    this.status = Rst.ApgRstAssert.IsUndefined(
       this.mongoDb,
       `MongoDB ${this.dbName} database name is invalid for current Local connection.`,
     );

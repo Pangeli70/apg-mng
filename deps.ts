@@ -8,6 +8,8 @@
 export * as StdFs from "https://deno.land/std@0.153.0/fs/mod.ts";
 export * as StdPath from "https://deno.land/std@0.153.0/path/mod.ts";
 
+export * as DotEnv from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
+
 // https://deno.land/x/mongo
 export {
     Bson,
