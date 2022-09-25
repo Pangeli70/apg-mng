@@ -24,27 +24,29 @@ interface ApgUserSchema {
 
 type ApgUsersDbCollection = MongoCollection<ApgUserSchema>;
 
+const DB_NAME = "ApgTest";
+const COLLECTION = "Users";
 
-export class ApgMngServiceSpec {
+export class ApgMngServiceTester {
 
     // Special find options settings if we are using Atlas
     private _findOptions: FindOptions = {};
 
-    async test(alocal: boolean) {
+    async run(alocal: boolean) {
 
         const env = DotEnv.config()
 
         const log: string[] = [];
-        const dbName = "test";
+
 
         let service: ApgMngService;
         if (alocal) {
-            service = new ApgMngLocalService(dbName)
+            service = new ApgMngLocalService(DB_NAME)
             log.push("Mongo DB Local connecting")
         }
         else {
             service = new ApgMngAtlasService(
-                dbName,
+                DB_NAME,
                 env.atlasShard,
                 env.user,
                 env.password,
@@ -69,7 +71,7 @@ export class ApgMngServiceSpec {
 
         if (mongoDBConnected) {
             db = service.Database;
-            users = db!.collection<ApgUserSchema>("users");
+            users = db!.collection<ApgUserSchema>(COLLECTION);
         }
 
         if (users == undefined) {
@@ -79,27 +81,27 @@ export class ApgMngServiceSpec {
         log.push("Users collection connected")
 
         // Clear all the data
-        const _deletedDocuments = await this.deleteAllUsersTest(users, log);
+        const _deletedDocuments = await this.deleteAllUsers(users, log);
 
         // insert
-        const singleInsertResult = await this.insertUserTest(users, log);
+        const singleInsertResult = await this.insertUser(users, log);
 
         // insertMany
-        const _inserMany = await this.insertManyUsersTest(users, log);
+        const _inserMany = await this.insertManyUsers(users, log);
 
         // findOne by ID
         if (singleInsertResult) {
-            const _userById = await this.findUserByIDTest(singleInsertResult, users, log);
+            const _userById = await this.findUserByID(singleInsertResult, users, log);
         }
 
         // Get all users
-        const _allUsers = await this.getAllUsersTest(users, log);
+        const _allUsers = await this.getAllUsers(users, log);
 
         // Count with filter
-        const _filteredCount = await this.countFilteredUsersTest(users, log);
+        const _filteredCount = await this.countFilteredUsers(users, log);
 
         // Count with options
-        const _countUsersWithSkip = await this.countUsersWithOptionTest(users, log);
+        const _countUsersWithSkip = await this.countUsersWithOption(users, log);
 
         // aggregation
         try {
@@ -115,14 +117,14 @@ export class ApgMngServiceSpec {
         }
 
         // updateOne
-        const _updateSingleResult = await this.updateSingleUserTest(users, log);
+        const _updateSingleResult = await this.updateSingleUser(users, log);
 
         // updateMany
-        const _multipleUpdateResult = await this.updateMultipleUsersTest(users, log);
+        const _multipleUpdateResult = await this.updateMultipleUsers(users, log);
 
         // deleteOne by Id
         if (singleInsertResult) {
-            const _deleteUserResult = await this.deleteUserByIDTest(singleInsertResult, users, log);
+            const _deleteUserResult = await this.deleteUserByID(singleInsertResult, users, log);
         }
 
         // Delete Many by filter
@@ -137,7 +139,7 @@ export class ApgMngServiceSpec {
         return log;
     }
 
-    async insertUserTest(
+    async insertUser(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<TApgMngInsertResult> {
@@ -159,7 +161,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async insertManyUsersTest(
+    async insertManyUsers(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<TApgMngMultipleInsertResult> {
@@ -193,7 +195,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async findUserByIDTest(
+    async findUserByID(
         userId: { $oid: string; } | Bson.ObjectId,
         ausers: ApgUsersDbCollection,
         alog: string[]
@@ -218,7 +220,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async deleteUserByIDTest(
+    async deleteUserByID(
         auserID: { $oid: string; } | Bson.ObjectId,
         ausers: ApgUsersDbCollection,
         alog: string[]
@@ -241,7 +243,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async countUsersWithOptionTest(
+    async countUsersWithOption(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<number> {
@@ -259,7 +261,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async countFilteredUsersTest(
+    async countFilteredUsers(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<number> {
@@ -276,7 +278,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async deleteAllUsersTest(
+    async deleteAllUsers(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<number> {
@@ -293,7 +295,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async updateSingleUserTest(
+    async updateSingleUser(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<IApgMngUpdateOneResult | undefined> {
@@ -313,7 +315,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async updateMultipleUsersTest(
+    async updateMultipleUsers(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<IApgMngUpdateManyResult | undefined> {
@@ -333,7 +335,7 @@ export class ApgMngServiceSpec {
         return r;
     }
 
-    async getAllUsersTest(
+    async getAllUsers(
         ausers: ApgUsersDbCollection,
         alog: string[]
     ): Promise<ApgUserSchema[] | undefined> {

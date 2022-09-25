@@ -1,15 +1,15 @@
-import * as Spec from "./test/ApgMngServiceSpec.ts"
+import * as Tester from "./test/ApgMngServiceTester.ts"
 
-const spec = new Spec.ApgMngServiceSpec();
+const tester = new Tester.ApgMngServiceTester();
 const local = true;
 const atlas = false;
 
-const logLocal = await spec.test(local);
+const logLocal = await tester.run(local);
 logLocal.forEach(e => {
     console.log(e);
 });
 
-const logAtlas = await spec.test(atlas);
+const logAtlas = await tester.run(atlas);
 logAtlas.forEach(e => {
     console.log(e);
 });
