@@ -73,7 +73,9 @@ export class ApgMngAtlasService extends ApgMngService {
     )
     if (!this.status.Ok) return this.status;
 
-    const mongoDBClient = new MongoClient();
+    if (this.client == null) { 
+      this.client = new MongoClient();
+    } 
     const shardTemplateHost = this.connectOptions!.servers[0].host;
     // Prepares shard names using template
     const shardHosts = [
@@ -84,15 +86,15 @@ export class ApgMngAtlasService extends ApgMngService {
     //Connecting to an Atlas Database trying all the shards
     this.connectOptions!.servers[0].host = shardHosts[0];
     try {
-      await mongoDBClient.connect(this.connectOptions!);
+      await this.client.connect(this.connectOptions!);
     } catch (_e) {
       this.connectOptions!.servers[0].host = shardHosts[1];
       try {
-        await mongoDBClient.connect(this.connectOptions!);
+        await this.client.connect(this.connectOptions!);
       } catch (_e) {
         this.connectOptions!.servers[0].host = shardHosts[2];
         try {
-          await mongoDBClient.connect(this.connectOptions!);
+          await this.client.connect(this.connectOptions!);
         } catch (e) {
           this.status = Rst.ApgRstAssert.IsTrue(
             true,
@@ -103,7 +105,7 @@ export class ApgMngAtlasService extends ApgMngService {
     }
     if (!this.status.Ok) return this.status;
 
-    this.mongoDb = mongoDBClient.database(this.dbName);
+    this.mongoDb = this.client.database(this.dbName);
     this.status = Rst.ApgRstAssert.IsUndefined(
       this.mongoDb,
       `MongoDB ${this.dbName} database name is invalid for current Atlas connection.`,

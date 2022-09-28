@@ -5,6 +5,7 @@
  */
 
 import {
+  MongoClient,
   MongoDatabase,
   ConnectOptions,
   FindOptions,
@@ -17,6 +18,8 @@ export abstract class ApgMngService {
   protected status = new Rst.ApgRst();
 
   protected connectOptions: ConnectOptions | null = null;
+
+  protected client: MongoClient | null = null;
 
   protected dbName: string;
 
@@ -41,6 +44,10 @@ export abstract class ApgMngService {
     return this.mongoDb;
   }
 
+  get Client() { 
+    return this.client;
+  }
+
   constructor(
     adbName: string
   ) {
@@ -49,6 +56,12 @@ export abstract class ApgMngService {
 
   abstract initializeConnection(): Promise<void>;
 
+  closeConnection() { 
+    if (this.client != null) { 
+      this.client.close();
+      this.client = null;
+    }
+  }
 
 }
 

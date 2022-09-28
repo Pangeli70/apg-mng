@@ -52,9 +52,12 @@ export class ApgMngLocalService extends ApgMngService {
     )
     if (!this.status.Ok) return this.status;
 
-    const mongoDBClient = new MongoClient();
+    if (this.client == null) { 
+      this.client = new MongoClient();
+    }
+
     try {
-      await mongoDBClient.connect(this.connectOptions!);
+      await this.client.connect(this.connectOptions!);
     } catch (e) {
       this.status = Rst.ApgRstAssert.IsTrue(
         true,
@@ -63,7 +66,7 @@ export class ApgMngLocalService extends ApgMngService {
     }
     if (!this.status.Ok) return this.status;
 
-    this.mongoDb = mongoDBClient.database(this.dbName);
+    this.mongoDb = this.client.database(this.dbName);
     this.status = Rst.ApgRstAssert.IsUndefined(
       this.mongoDb,
       `MongoDB ${this.dbName} database name is invalid for current Local connection.`,
