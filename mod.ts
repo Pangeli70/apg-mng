@@ -16,5 +16,6 @@ export type {
 export { ApgMngService } from './src/classes/ApgMngService.ts';
 export { ApgMngLocalService } from './src/classes/ApgMngLocalService.ts';
 export { ApgMngAtlasService } from './src/classes/ApgMngAtlasService.ts';
+export { ApgMngConnector } from './src/classes/ApgMngConnector.ts';
 
 export { eApgMngMode } from './src/enums/eApgMngMode.ts';
