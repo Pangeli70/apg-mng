@@ -31,7 +31,7 @@ interface ApgUserSchema {
 type ApgUsersDbCollection = MongoCollection<ApgUserSchema>;
 
 const DB_NAME = "ApgTest";
-const COLLECTION = "Users";
+const COLLECTION_NAME = "Users";
 
 export class ApgMngTester {
 
@@ -45,7 +45,7 @@ export class ApgMngTester {
         const connector = new ApgMngConnector();
 
         await connector.connect(amode, DB_NAME);
-        const users = connector.getCollection<ApgUserSchema>(COLLECTION);
+        const users = connector.getCollection<ApgUserSchema>(COLLECTION_NAME);
         if (!users) {
             log.push("Users collection not connected")
             return log;

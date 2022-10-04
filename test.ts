@@ -19,3 +19,5 @@ const logAtlas = await tester.run(eApgMngMode.atlas);
 logAtlas.forEach(e => {
     console.log(e);
 });
+
+console.log("Test terminated");
