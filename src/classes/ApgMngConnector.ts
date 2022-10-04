@@ -16,24 +16,18 @@ import { ApgMngAtlasService } from "./ApgMngAtlasService.ts";
 import { eApgMngMode } from "../enums/eApgMngMode.ts";
 
 
-export enum eApgUtsLogMode {
-    quiet = "quiet",
-    verbose = "verbose"
-}
-
-
 export class ApgMngConnector extends Uts.ApgUtsMeta {
 
     private _mongoService: ApgMngService | null = null;
-    private _logMode: eApgUtsLogMode
+    private _logMode: Uts.eApgUtsLogMode
 
-    constructor(alogMode = eApgUtsLogMode.verbose) {
+    constructor(alogMode = Uts.eApgUtsLogMode.verbose) {
         super(import.meta.url)
         this._logMode = alogMode;
     }
 
     #log(amessage: string) { 
-        if (this._logMode == eApgUtsLogMode.verbose) {
+        if (this._logMode == Uts.eApgUtsLogMode.verbose) {
             console.log(amessage)
         }
     }

@@ -1,3 +1,9 @@
+/** -----------------------------------------------------------------------
+ * @module [Mng]
+ * @author [APG] ANGELI Paolo Giusto
+ * @version 0.9.2 [APG 2022/10/04] Github Beta
+ * -----------------------------------------------------------------------
+*/
 import { eApgMngMode } from "./mod.ts";
 import * as Tester from "./test/ApgMngTester.ts"
 

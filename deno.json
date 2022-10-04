@@ -1,5 +1,6 @@
 {
     "tasks":{
-        "test": "deno run -A --unstable --watch test.ts" 
+        "test": "deno run -A --unstable --watch test.ts" ,
+        "cache": "deno cache --reload test.ts"
     }
 }
