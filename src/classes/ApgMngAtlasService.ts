@@ -69,7 +69,7 @@ export class ApgMngAtlasService extends ApgMngService {
 
     this.status = Rst.ApgRstAssert.IsTrue(
       this.connectOptions == null,
-      "Mongo DB Atlas connection options not provided"
+      "Mongo DB Atlas connection options not provided",
     )
     if (!this.status.Ok) return this.status;
 

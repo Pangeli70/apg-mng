@@ -1,15 +1,15 @@
-import * as Tester from "./test/ApgMngServiceTester.ts"
+import { eApgMngMode } from "./mod.ts";
+import * as Tester from "./test/ApgMngTester.ts"
 
-const tester = new Tester.ApgMngServiceTester();
-const local = true;
-const atlas = false;
+const tester = new Tester.ApgMngTester();
 
-const logLocal = await tester.run(local);
+
+const logLocal = await tester.run(eApgMngMode.local);
 logLocal.forEach(e => {
     console.log(e);
 });
 
-const logAtlas = await tester.run(atlas);
+const logAtlas = await tester.run(eApgMngMode.atlas);
 logAtlas.forEach(e => {
     console.log(e);
 });

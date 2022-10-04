@@ -1,5 +1,5 @@
 import {
-    Bson, MongoDatabase, MongoCollection, FindOptions, CountOptions, DotEnv
+    Bson, MongoCollection, FindOptions, CountOptions
 } from "../deps.ts";
 
 import {
@@ -7,10 +7,9 @@ import {
     TApgMngMultipleInsertResult,
     IApgMngUpdateManyResult,
     IApgMngUpdateOneResult,
-    ApgMngService,
-    ApgMngLocalService,
-    ApgMngAtlasService
+    eApgMngMode
 } from "../mod.ts"
+import { ApgMngConnector } from "../src/classes/ApgMngConnector.ts";
 
 
 
@@ -27,59 +26,23 @@ type ApgUsersDbCollection = MongoCollection<ApgUserSchema>;
 const DB_NAME = "ApgTest";
 const COLLECTION = "Users";
 
-export class ApgMngServiceTester {
+export class ApgMngTester {
 
     // Special find options settings if we are using Atlas
     private _findOptions: FindOptions = {};
 
-    async run(alocal: boolean) {
-
-        const env = DotEnv.config()
+    async run(amode: eApgMngMode) {
 
         const log: string[] = [];
 
+        const connector = new ApgMngConnector();
 
-        let service: ApgMngService;
-        if (alocal) {
-            service = new ApgMngLocalService(DB_NAME)
-            log.push("Mongo DB Local connecting")
-        }
-        else {
-            service = new ApgMngAtlasService(
-                DB_NAME,
-                env.atlasShard,
-                env.user,
-                env.password,
-            )
-            log.push("Mongo DB Atlas connecting")
-            this._findOptions = { noCursorTimeout: false };
-        }
-
-        await service.initializeConnection();
-
-        const mongoDBConnected = service.Status.Ok;
-
-        if (!mongoDBConnected) {
-            log.push("testMongo error: Mongo DB not connected");
-            return log;
-        } else {
-            log.push("Mongo DB connected")
-        }
-
-        let db: MongoDatabase | null = null;
-        let users: ApgUsersDbCollection | null = null;
-
-        if (mongoDBConnected) {
-            db = service.Database;
-            users = db!.collection<ApgUserSchema>(COLLECTION);
-        }
-
-        if (users == undefined) {
-            log.push("testMongo error: Users collection not initialized");
+        await connector.connect(amode, DB_NAME);
+        const users = connector.getCollection<ApgUserSchema>(COLLECTION);
+        if (!users) {
+            log.push("Users collection not connected")
             return log;
         }
-        log.push("Users collection connected")
-
         // Clear all the data
         const _deletedDocuments = await this.deleteAllUsers(users, log);
 
@@ -136,7 +99,9 @@ export class ApgMngServiceTester {
         // Find with Limit and sort is useful for pagination
         const _featuredUser = await users.find(undefined, { noCursorTimeout: false }).limit(2).toArray();
 
+        connector.disconenct();
         return log;
+        
     }
 
     async insertUser(

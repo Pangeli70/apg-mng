@@ -17,4 +17,4 @@ export { ApgMngService } from './src/classes/ApgMngService.ts';
 export { ApgMngLocalService } from './src/classes/ApgMngLocalService.ts';
 export { ApgMngAtlasService } from './src/classes/ApgMngAtlasService.ts';
 
-export { eApgMngCodedErrors } from './src/enums/eApgMngCodedErrors.ts';
+export { eApgMngMode } from './src/enums/eApgMngMode.ts';
