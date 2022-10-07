@@ -18,6 +18,8 @@ import { eApgMngMode } from "../enums/eApgMngMode.ts";
 
 export class ApgMngConnector extends Uts.ApgUtsMeta {
 
+    private static _connectionsNum = 0;
+
     private _mongoService: ApgMngService | null = null;
     private _logMode: Uts.eApgUtsLogMode
 
@@ -33,6 +35,12 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
     }
 
     async connect(amode: eApgMngMode, adbName: string) {
+
+        console.log(Deno.resources());
+
+        if (ApgMngConnector._connectionsNum > 0) { 
+            throw new Error("Mongo connection not closed")
+        }
 
         const env = DotEnv.config()
 
@@ -52,12 +60,14 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
         if (this._mongoService != null) {
 
             await this._mongoService.initializeConnection();
+            console.log(Deno.resources());
 
             if (!this._mongoService.Status.Ok) {
                 this.#log(this.CLASS_NAME + " Error: MongoDB not connected");
                 return;
             } else {
-                this.#log("MongoDB connected")
+                this.#log("MongoDB connected");
+                ApgMngConnector._connectionsNum++;
             }
         }
         else {
@@ -66,8 +76,9 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
 
     }
 
-    disconenct() { 
+    disconnect() { 
         if (this._mongoService) { 
+            ApgMngConnector._connectionsNum--;
             this._mongoService.closeConnection();
         }
     }
