@@ -36,7 +36,7 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
 
     async connect(amode: eApgMngMode, adbName: string) {
 
-        console.log(Deno.resources());
+        this.#log(`Deno resources before connection = \n ${JSON.stringify(Deno.resources(), null, 2)}`);
 
         if (ApgMngConnector._connectionsNum > 0) { 
             throw new Error("Mongo connection not closed")
@@ -60,7 +60,6 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
         if (this._mongoService != null) {
 
             await this._mongoService.initializeConnection();
-            console.log(Deno.resources());
 
             if (!this._mongoService.Status.Ok) {
                 this.#log(this.CLASS_NAME + " Error: MongoDB not connected");
@@ -68,6 +67,7 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
             } else {
                 this.#log("MongoDB connected");
                 ApgMngConnector._connectionsNum++;
+                this.#log(`Deno resources after connection = \n ${JSON.stringify(Deno.resources(), null, 2)}`);
             }
         }
         else {
@@ -80,6 +80,7 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
         if (this._mongoService) { 
             ApgMngConnector._connectionsNum--;
             this._mongoService.closeConnection();
+            this.#log(`Deno resources after disconnection = \n ${JSON.stringify(Deno.resources(), null, 2)}`);
         }
     }
 

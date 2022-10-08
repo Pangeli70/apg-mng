@@ -106,7 +106,7 @@ export class ApgMngTester {
         // Find with Limit and sort is useful for pagination
         const _featuredUser = await users.find(undefined, { noCursorTimeout: false }).limit(2).toArray();
 
-        connector.disconenct();
+        connector.disconnect();
         return log;
         
     }
