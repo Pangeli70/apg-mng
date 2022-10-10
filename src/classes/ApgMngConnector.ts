@@ -9,6 +9,7 @@ import {
     MongoCollection,
     DotEnv,
     Uts,
+    Rst
 } from "../../deps.ts";
 import { ApgMngService } from "./ApgMngService.ts";
 import { ApgMngLocalService } from "./ApgMngLocalService.ts";
@@ -18,27 +19,38 @@ import { eApgMngMode } from "../enums/eApgMngMode.ts";
 
 export class ApgMngConnector extends Uts.ApgUtsMeta {
 
+    static readonly DENO_RES_SIGNATURE = "{id:string, res:string}"
+
     private static _connectionsNum = 0;
 
     private _mongoService: ApgMngService | null = null;
-    private _logMode: Uts.eApgUtsLogMode
+    private _logMode: Uts.eApgUtsLogMode;
+
+    private _denoResources: any[] = [];
+
+
 
     constructor(alogMode = Uts.eApgUtsLogMode.verbose) {
         super(import.meta.url)
         this._logMode = alogMode;
     }
 
-    #log(amessage: string) { 
+    #log(amessage: string) {
         if (this._logMode == Uts.eApgUtsLogMode.verbose) {
             console.log(amessage)
         }
     }
 
+    /**
+     * @signature "{id:string, res:string}"
+     */
     async connect(amode: eApgMngMode, adbName: string) {
 
-        this.#log(`Deno resources before connection = \n ${JSON.stringify(Deno.resources(), null, 2)}`);
+        const p: { id: string; res: string }[] = [];
 
-        if (ApgMngConnector._connectionsNum > 0) { 
+        this._denoResources.push(Deno.resources());
+
+        if (ApgMngConnector._connectionsNum > 0) {
             throw new Error("Mongo connection not closed")
         }
 
@@ -57,31 +69,48 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
             )
             this.#log("MongoDB Atlas connecting")
         }
-        if (this._mongoService != null) {
 
-            await this._mongoService.initializeConnection();
+        const r = await this._mongoService.initializeConnection();
 
-            if (!this._mongoService.Status.Ok) {
-                this.#log(this.CLASS_NAME + " Error: MongoDB not connected");
-                return;
-            } else {
-                this.#log("MongoDB connected");
-                ApgMngConnector._connectionsNum++;
-                this.#log(`Deno resources after connection = \n ${JSON.stringify(Deno.resources(), null, 2)}`);
+        if (r.Ok) {
+            this.#log("MongoDB connected");
+            ApgMngConnector._connectionsNum++;
+            this._denoResources.push(Deno.resources());
+
+            for (const key in this._denoResources[1]) {
+                if (!this._denoResources[0][key]) {
+                    p.push({ id: key, res: this._denoResources[1][key] })
+                }
             }
-        }
-        else {
-            this.#log("MongoDB connection FAILURE")
+            r.setPayload({
+                signature: ApgMngConnector.DENO_RES_SIGNATURE,
+                data: p
+            });
         }
 
+        return r;
     }
 
-    disconnect() { 
-        if (this._mongoService) { 
+    disconnect() {
+        const r = new Rst.ApgRst();
+        const p = [];
+        if (this._mongoService) {
             ApgMngConnector._connectionsNum--;
             this._mongoService.closeConnection();
-            this.#log(`Deno resources after disconnection = \n ${JSON.stringify(Deno.resources(), null, 2)}`);
+            this._denoResources.push(Deno.resources());
+
+            for (const key in this._denoResources[1]) {
+                if (!this._denoResources[2][key]) {
+                    p.push({ id: key, res: this._denoResources[1][key] })
+                }
+            }
+            r.setPayload({
+                signature: ApgMngConnector.DENO_RES_SIGNATURE,
+                data: p
+            });
         }
+
+        return r;
     }
 
     getCollection<T>(acollectionName: string) {
@@ -89,8 +118,8 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
         let r: MongoCollection<T> | null = null;
 
         if (!this._mongoService) return r;
-        
-        if (!this._mongoService.Status.Ok) return r;
+
+        if (!this._mongoService.Status) return r;
 
         r = this._mongoService.Database!.collection<T>(acollectionName);
 
@@ -98,7 +127,7 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
             this.#log(this.CLASS_NAME + " Error: " + acollectionName + " collection not initialized");
             return null;
         }
-        this.#log( acollectionName + " collection connected")
+        this.#log(acollectionName + " collection connected")
 
         return r;
     }

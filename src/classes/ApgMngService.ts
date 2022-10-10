@@ -8,35 +8,33 @@
 import {
   MongoClient,
   MongoDatabase,
-  ConnectOptions,
-  FindOptions,
+  MongoConnOpts,
+  MongoFindOpts,
   Rst
 } from "../../deps.ts";
 
 
 export abstract class ApgMngService {
 
-  protected status = new Rst.ApgRst();
-
-  protected connectOptions: ConnectOptions | null = null;
+  protected connectOptions: MongoConnOpts | null = null;
 
   protected client: MongoClient | null = null;
 
   protected dbName: string;
 
   /** Special find options settings for queries timeout if we are using Atlas */
-  protected mongoDbFindOptions: FindOptions = {};
+  protected findOptions: MongoFindOpts = {};
 
   protected mongoDb: MongoDatabase | null = null;
 
   get FindOptions() {
-    return this.mongoDbFindOptions;
+    return this.findOptions;
   }
 
   get Status() {
-    return this.status;
+    return this.client !== null && this.mongoDb !== null;
   }
-  
+
   get DbName() {
     return this.dbName;
   }
@@ -45,7 +43,7 @@ export abstract class ApgMngService {
     return this.mongoDb;
   }
 
-  get Client() { 
+  get Client() {
     return this.client;
   }
 
@@ -55,10 +53,14 @@ export abstract class ApgMngService {
     this.dbName = adbName;
   }
 
-  abstract initializeConnection(): Promise<void>;
+  initializeConnection(): Promise<Rst.ApgRst> {
+    return new Promise<Rst.ApgRst>(() => {
+      throw new Error(`If you want to call [${this.initializeConnection.name}] method you must override the implementation.`)
+    })
+  }
 
-  closeConnection() { 
-    if (this.client != null) { 
+  closeConnection() {
+    if (this.client != null) {
       this.client.close();
       this.client = null;
     }

@@ -20,9 +20,10 @@ export {
 } from "https://deno.land/x/mongo@v0.29.3/mod.ts";
 
 export type {
-    FindOptions,
-    CountOptions,
-    ConnectOptions
+    FindOptions as MongoFindOpts,
+    CountOptions as MongoCountOpts,
+    ConnectOptions as MongoConnOpts,
+    Filter as MongoFilter,
 } from "https://deno.land/x/mongo@v0.29.3/mod.ts";
 
 //deno.land/x/web_bson
@@ -31,5 +32,7 @@ export {
 } from 'https://deno.land/x/web_bson@v0.1.10/src/bson.ts';
 
 // https://github
-export * as Uts from "https://raw.githubusercontent.com/Pangeli70/apg-uts/master/mod.ts";
+// export * as Uts from "https://raw.githubusercontent.com/Pangeli70/apg-uts/master/mod.ts";
+export * as Uts from "../UTS/mod.ts";
+
 export * as Rst from "https://raw.githubusercontent.com/Pangeli70/apg-rst/master/mod.ts";

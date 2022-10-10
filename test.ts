@@ -4,20 +4,14 @@
  * @version 0.9.2 [APG 2022/10/04] Github Beta
  * -----------------------------------------------------------------------
 */
+import { Uts } from "./deps.ts";
 import { eApgMngMode } from "./mod.ts";
-import * as Tester from "./test/ApgMngTester.ts"
+import { ApgMngSpec } from "./test/ApgMngTester.ts"
 
-const tester = new Tester.ApgMngTester();
+const localDbSpec = new ApgMngSpec(eApgMngMode.local);
+await localDbSpec.specRun(Uts.eApgUtsSpecRun.yes);
 
-
-const logLocal = await tester.run(eApgMngMode.local);
-logLocal.forEach(e => {
-    console.log(e);
-});
-
-const logAtlas = await tester.run(eApgMngMode.atlas);
-logAtlas.forEach(e => {
-    console.log(e);
-});
+const atlasDbSpec = new ApgMngSpec(eApgMngMode.atlas);
+await atlasDbSpec.specRun(Uts.eApgUtsSpecRun.yes);
 
 console.log("Test terminated");

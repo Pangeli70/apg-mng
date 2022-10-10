@@ -5,6 +5,9 @@
  * -----------------------------------------------------------------------
  */
 
+/**
+ * Using a local version of the database 
+ */
 export enum eApgMngMode {
   local = "local",
   atlas = "atlas"
