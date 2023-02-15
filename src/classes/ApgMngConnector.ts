@@ -2,6 +2,7 @@
  * @module [Mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.2 [APG 2022/10/04] Github Beta
+ * @version 0.9.5 [APG 2023/02/14] Rst simplification 
  * -----------------------------------------------------------------------
  */
 
@@ -72,7 +73,7 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
 
         const r = await this._mongoService.initializeConnection();
 
-        if (r.Ok) {
+        if (r.ok) {
             this.#log("MongoDB connected");
             ApgMngConnector._connectionsNum++;
             this._denoResources.push(Deno.resources());
@@ -82,17 +83,17 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
                     p.push({ id: key, res: this._denoResources[1][key] })
                 }
             }
-            r.setPayload({
+            r.payload = {
                 signature: ApgMngConnector.DENO_RES_SIGNATURE,
                 data: p
-            });
+            };
         }
 
         return r;
     }
 
     disconnect() {
-        const r = new Rst.ApgRst();
+        const r: Rst.IApgRst = { ok: true };
         const p = [];
         if (this._mongoService) {
             ApgMngConnector._connectionsNum--;
@@ -104,10 +105,10 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
                     p.push({ id: key, res: this._denoResources[1][key] })
                 }
             }
-            r.setPayload({
+            r.payload = {
                 signature: ApgMngConnector.DENO_RES_SIGNATURE,
                 data: p
-            });
+            };
         }
 
         return r;

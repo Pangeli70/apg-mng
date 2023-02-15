@@ -2,6 +2,7 @@
  * @module [Mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.2 [APG 2022/10/04] Github Beta
+ * @version 0.9.5 [APG 2023/02/14] Rst simplification 
  * ------------------------------------------------------------------------
  */
 
@@ -53,8 +54,8 @@ export abstract class ApgMngService {
     this.dbName = adbName;
   }
 
-  initializeConnection(): Promise<Rst.ApgRst> {
-    return new Promise<Rst.ApgRst>(() => {
+  initializeConnection(): Promise<Rst.IApgRst> {
+    return new Promise<Rst.IApgRst>(() => {
       throw new Error(`If you want to call [${this.initializeConnection.name}] method you must override the implementation.`)
     })
   }
