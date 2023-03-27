@@ -51,7 +51,7 @@ export class ApgMngLocalService extends ApgMngService {
       this.connectOptions == null,
       "Local connection options not provided"
     )
-    if (!r.Ok) { 
+    if (!r.ok) { 
       return r;
     }
 
@@ -68,7 +68,7 @@ export class ApgMngLocalService extends ApgMngService {
       );
     }
 
-    if (!r.Ok) {
+    if (!r.ok) {
       return r;
     }
 

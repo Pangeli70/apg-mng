@@ -72,7 +72,7 @@ export class ApgMngAtlasService extends ApgMngService {
       this.connectOptions == null,
       "Mongo DB Atlas connection options not provided",
     )
-    if (!r.Ok) return r;
+    if (!r.ok) return r;
 
     if (this.client == null) {
       this.client = new MongoClient();
