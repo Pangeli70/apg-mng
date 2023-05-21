@@ -1,22 +1,12 @@
 /** -----------------------------------------------------------------------
- * @module [Mng]
+ * @module [apg-mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.2 [APG 2022/10/04] Github Beta
+ * @version 0.9.7 [APG 2023/05/21] Separation of concerns lib/srv
  * -----------------------------------------------------------------------
  */
 
-import {
-    Bson, MongoCollection, MongoFilter, MongoFindOpts, Rst, Uts
-} from "../deps.ts";
-
-import {
-    TApgMngInsertResult,
-    TApgMngMultipleInsertResult,
-    IApgMngUpdateManyResult,
-    IApgMngUpdateOneResult,
-    eApgMngMode
-} from "../mod.ts"
-import { ApgMngConnector } from "../src/classes/ApgMngConnector.ts";
+import { Mongo, Spc, Rst, Mng, Uts } from "../deps.ts";
 
 
 
@@ -28,7 +18,7 @@ interface ApgUserSchema {
     group: string;
 }
 
-type ApgUsersDbCollection = MongoCollection<ApgUserSchema>;
+type ApgUsersDbCollection = Mongo.Collection<ApgUserSchema>;
 
 const DB_NAME = "ApgTest";
 const COLLECTION_NAME = "Users";
@@ -71,18 +61,17 @@ const MOCK_USERS = {
     ]
 }
 
-export class ApgMngSpec extends Uts.ApgUtsSpecable {
+export class ApgMngSpec extends Spc.ApgSpcSpec {
 
     // Special find options settings if we are using Atlas
-    private _findOptions: MongoFindOpts = {};
-    private _dbMode: eApgMngMode;
-    private _connector = new ApgMngConnector();
-    private _users: MongoCollection<ApgUserSchema> | null = null;
-    //private _log: string[] = [];
+    private _findOptions: Mongo.FindOptions = {};
+    private _dbMode: Mng.eApgMngMode;
+    private _connector = new Mng.ApgMngConnector();
+    private _users: Mongo.Collection<ApgUserSchema> | null = null;
 
-    private _singleInsertResult: TApgMngInsertResult;
+    private _singleInsertResult: Mng.TApgMngInsertResult;
 
-    constructor(amode: eApgMngMode) {
+    constructor(amode: Mng.eApgMngMode) {
         super(import.meta.url);
         this._dbMode = amode;
 
@@ -90,31 +79,34 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
         // every spec alters the dataset so every specification's correctness 
         // might depend on the previouses.
         this.flags = {
-            [this.S01a_DeleteAll.name]: Uts.eApgUtsSpecRun.yes,
+            [this.S01a_DeleteAll.name]: Spc.eApgSpcRun.yes,
 
-            [this.S02a_InsertOne.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S02b_Count.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S02c_InsertMany.name]: Uts.eApgUtsSpecRun.yes,
+            [this.S02a_InsertOne.name]: Spc.eApgSpcRun.yes,
+            [this.S02b_Count.name]: Spc.eApgSpcRun.yes,
+            [this.S02c_InsertMany.name]: Spc.eApgSpcRun.yes,
 
-            [this.S03a_FindOneByID.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S03b_FindOneByFilter.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S03c_FindAllDescSorted.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S03d_FindAllAndSkipSome.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S03e_FindAllAndLimitToFirstN.name]: Uts.eApgUtsSpecRun.yes,
+            [this.S03a_FindOneByID.name]: Spc.eApgSpcRun.yes,
+            [this.S03b_FindOneByFilter.name]: Spc.eApgSpcRun.yes,
+            [this.S03c_FindAllDescSorted.name]: Spc.eApgSpcRun.yes,
+            [this.S03d_FindAllAndSkipSome.name]: Spc.eApgSpcRun.yes,
+            [this.S03e_FindAllAndLimitToFirstN.name]: Spc.eApgSpcRun.yes,
 
-            [this.S04a_CountWithFilter.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S04b_CountByAggregateWithSkipOption.name]: Uts.eApgUtsSpecRun.yes,
+            [this.S04a_CountWithFilter.name]: Spc.eApgSpcRun.yes,
+            [this.S04b_CountByAggregateWithSkipOption.name]: Spc.eApgSpcRun.yes,
 
-            [this.S05a_UpdateSingle.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S05b_UpdateMany.name]: Uts.eApgUtsSpecRun.yes,
+            [this.S05a_UpdateSingle.name]: Spc.eApgSpcRun.yes,
+            [this.S05b_UpdateMany.name]: Spc.eApgSpcRun.yes,
 
-            [this.S06a_DeleteSingleById.name]: Uts.eApgUtsSpecRun.yes,
-            [this.S06b_DeleteManyByFilter.name]: Uts.eApgUtsSpecRun.yes,
+            [this.S06a_DeleteSingleById.name]: Spc.eApgSpcRun.yes,
+            [this.S06b_DeleteManyByFilter.name]: Spc.eApgSpcRun.yes,
         }
+
+        this.specifier.Mode = Uts.eApgUtsLogMode.silent;
     }
 
 
-    override async specExecute() {
+    override async execute() {
+
         // Clear database
         await this.S01a_DeleteAll();
         // Pupulate
@@ -138,21 +130,30 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
         await this.S06b_DeleteManyByFilter();
     }
 
-    override async specMockInit() {
+    override async mockInit() {
 
-        const r = await super.specMockInit();
+        let r = await super.mockInit();
 
-        this._connector = new ApgMngConnector();
+        this._connector = new Mng.ApgMngConnector();
 
-        const rst = await this._connector.connect(this._dbMode, DB_NAME);
+        const options =
+        {
+            shardName: Deno.env.get("shardName") || "",
+            user: Deno.env.get("user") || "",
+            password: Deno.env.get("password") || "",
+        }
 
-        if (!rst.Ok) {
-            r.message = "Impossibile to connect to database: " + rst.AsImmutableIApgRst.error;
+        const rst = await this._connector.connect(this._dbMode, DB_NAME, options);
+
+        if (!rst.ok) {
+            r.message = "Impossibile to connect to database: " + rst.message;
         } else {
-            r.payload = rst.getPayload(ApgMngConnector.DENO_RES_SIGNATURE);
+            r = Rst.ApgRst.CheckPayload(rst, Mng.ApgMngConnector.DENO_RES_SIGNATURE);
 
             this._users = this._connector.getCollection<ApgUserSchema>(COLLECTION_NAME);
             if (!this._users) {
+                r.ok = false;
+                r.payload = undefined;
                 r.message = "Users collection not connected";
             }
         }
@@ -160,305 +161,320 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
         return r;
     }
 
-    override async specMockEnd() {
-        const r = await super.specMockEnd();
+    override async mockEnd() {
+
+        let r = await super.mockEnd();
         const rst = this._connector.disconnect();
-        r.payload = rst.getPayload(ApgMngConnector.DENO_RES_SIGNATURE);
+        r = Rst.ApgRst.CheckPayload(rst, Mng.ApgMngConnector.DENO_RES_SIGNATURE);
         r.message = "Mongo Db disconnection completed";
         return r;
+
     }
 
     async S01a_DeleteAll() {
 
-        let r = this.specInit(this.S01a_DeleteAll.name);
+        const spec = this.specifier;
+
+        let r = spec.Init(this.S01a_DeleteAll.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to delete all the users from the test collection`);
-        this.specWeExpect(`to get more than one deletion`);
+        spec.When(`we want to delete all the users from the test collection`);
+        spec.WeExpect(`to get more than one deletion`);
 
         const tr = await this.#deleteAll(this._users!);
         const n = tr.ok ? tr.ir! : 0;
         r = n > 0;
 
-        this.specWeGot(`[${n}] deletions`, r);
-        this.specResume();
+        spec.WeGot(`[${n}] deletions`, r);
+        spec.Resume();
 
     }
 
     async S02a_InsertOne() {
 
-        let r = this.specInit(this.S02a_InsertOne.name);
+        const spec = this.specifier;
+
+        let r = spec.Init(this.S02a_InsertOne.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to insert one user into the test collection`);
-        this.specWeExpect(`to get a positive result`);
+        spec.When(`we want to insert one user into the test collection`);
+        spec.WeExpect(`to get a positive result`);
 
         const tr = await this.#insertOne(this._users!);
         r = tr.ir != undefined;
         this._singleInsertResult = tr.ir!;
 
-        this.specWeGot(`One insertion`, r);
-        this.specResume();
+        spec.WeGot(`One insertion`, r);
+        spec.Resume();
     }
 
     async S02b_Count() {
 
-        let r = this.specInit(this.S02b_Count.name);
+        const spec = this.specifier;
+        let r = spec.Init(this.S02b_Count.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to count items in the collection after a single insertion`);
-        this.specWeExpect(`to get 1 as result`);
+        spec.When(`we want to count items in the collection after a single insertion`);
+        spec.WeExpect(`to get 1 as result`);
 
         const tr = await this.#countUnfiltered(this._users!);
         const n = tr.ok ? tr.ir : 0;
         r = n === 1;
 
-        this.specWeGot(`[${n}]`, r);
-        this.specResume();
+        spec.WeGot(`[${n}]`, r);
+        spec.Resume();
 
     }
 
     async S02c_InsertMany() {
 
-        let r = this.specInit(this.S02c_InsertMany.name);
+        const spec = this.specifier;
+        let r = spec.Init(this.S02c_InsertMany.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to insert many users into the test collection`);
-        this.specWeExpect(`to get [${MOCK_USERS.many.length}] insertions`);
+        spec.When(`we want to insert many users into the test collection`);
+        spec.WeExpect(`to get [${MOCK_USERS.many.length}] insertions`);
 
         const tr = await this.#insertMany(this._users!);
         const n = tr.ok ? tr.ir!.insertedCount : 0;
         r = n > 0;
 
-        this.specWeGot(`[${n}] insertions`, r);
+        spec.WeGot(`[${n}] insertions`, r);
 
-        this.specWeExpect(`to get [${MOCK_USERS.many.length + 1}] total items`);
+        spec.WeExpect(`to get [${MOCK_USERS.many.length + 1}] total items`);
         const tr2 = await this.#countUnfiltered(this._users!);
         const n2 = tr2.ok ? tr.ir : 0;
 
-        this.specWeGot(`[${n2}]`, r);
-        this.specResume();
+        spec.WeGot(`[${n2}]`, r);
+        spec.Resume();
 
     }
 
     async S03a_FindOneByID() {
-        let r = this.specInit(this.S03a_FindOneByID.name);
+        const spec = this.specifier;
+        let r = spec.Init(this.S03a_FindOneByID.name, this.flags);
         if (!r) return;
 
         r = this._singleInsertResult !== undefined;
         if (!r) {
-            this.specSkip(
-                Uts.eApgUtsSpecRun.no,
+            spec.Skip(
                 `We need the result of ${this.S02a_InsertOne.name} to run this spec.`
             );
             return
         }
 
-        this.specWhen(`we want to find one user into the test collection by object ID`);
-        this.specWeExpect(`to get a the user with name [${MOCK_USERS.single.username}]`);
+        spec.When(`we want to find one user into the test collection by object ID`);
+        spec.WeExpect(`to get a the user with name [${MOCK_USERS.single.username}]`);
 
         const tr = await this.#findByID(this._users!, this._singleInsertResult!);
         const userName = tr.ir ? tr.ir.username : "undefined";
         r = userName == MOCK_USERS.single.username;
 
-        this.specWeGot(`the user with username [${userName}]`, r);
-        this.specResume();
+        spec.WeGot(`the user with username [${userName}]`, r);
+        spec.Resume();
     }
 
     async S03b_FindOneByFilter() {
-
+        const spec = this.specifier;
         const USER_NAME = MOCK_USERS.many[1].username;
         const PASSWORD = MOCK_USERS.many[1].password;
 
-        let r = this.specInit(this.S03b_FindOneByFilter.name);
+        let r = spec.Init(this.S03b_FindOneByFilter.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to find one user with a specific password [${PASSWORD}]`);
-        this.specWeExpect(`to get a the user with name [${USER_NAME}]`);
+        spec.When(`we want to find one user with a specific password [${PASSWORD}]`);
+        spec.WeExpect(`to get a the user with name [${USER_NAME}]`);
 
         const tr = await this.#findByFilter(this._users!, { password: PASSWORD });
         const userName = tr.ok ? tr.ir!.username : "undefined";
         r = userName == USER_NAME;
 
-        this.specWeGot(`A user whose name is [${userName}]`, r);
+        spec.WeGot(`A user whose name is [${userName}]`, r);
 
-        this.specResume();
+        spec.Resume();
     }
 
     async S03c_FindAllDescSorted() {
+        const spec = this.specifier;
         const COUNT = MOCK_USERS.many.length + 1;
 
-        let r = this.specInit(this.S03c_FindAllDescSorted.name);
+        let r = spec.Init(this.S03c_FindAllDescSorted.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want retrieve all the users from the collection`);
-        this.specWeExpect(`to get [${COUNT}] items`);
+        spec.When(`we want retrieve all the users from the collection`);
+        spec.WeExpect(`to get [${COUNT}] items`);
 
         const tr = await this.#getAllDescSortedByUserName(this._users!);
         const n = tr.ir ? tr.ir!.length : 0;
         r = n == COUNT;
-        this.specWeGot(`[${n}] users`, r);
+        spec.WeGot(`[${n}] users`, r);
 
-        this.specWeExpect(`that users[0] is greater than users[1]`);
+        spec.WeExpect(`that users[0] is greater than users[1]`);
         r = tr.ir![0].username > tr.ir![1].username;
 
-        this.specWeGot(`[${tr.ir![0].username}] > [${tr.ir![1].username}]`, r);
-        this.specResume();
+        spec.WeGot(`[${tr.ir![0].username}] > [${tr.ir![1].username}]`, r);
+        spec.Resume();
 
     }
 
     async S03d_FindAllAndSkipSome() {
+        const spec = this.specifier;
         const SKIP_NUM = 2;
         const TOTAL_NUM = MOCK_USERS.many.length + 1;
         const RES_NUM = TOTAL_NUM - SKIP_NUM;
 
-        let r = this.specInit(this.S03d_FindAllAndSkipSome.name);
+        let r = spec.Init(this.S03d_FindAllAndSkipSome.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to find some users skipping the first [${SKIP_NUM}]`);
-        this.specWeExpect(`to get an array of users with length [${RES_NUM}]`);
+        spec.When(`we want to find some users skipping the first [${SKIP_NUM}]`);
+        spec.WeExpect(`to get an array of users with length [${RES_NUM}]`);
 
         const tr = await this._users!.find(undefined, { noCursorTimeout: false }).skip(SKIP_NUM).toArray();
         const n = (tr) ? tr!.length : 0;
         r = n == RES_NUM;
 
-        this.specWeGot(`[${n}] items`, r);
-        this.specResume();
+        spec.WeGot(`[${n}] items`, r);
+        spec.Resume();
     }
 
     async S03e_FindAllAndLimitToFirstN() {
+        const spec = this.specifier;
         const LIMIT_NUM = 3;
 
-        let r = this.specInit(this.S03e_FindAllAndLimitToFirstN.name);
+        let r = spec.Init(this.S03e_FindAllAndLimitToFirstN.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to find some users limiting the result to the first [${LIMIT_NUM}]`);
-        this.specWeExpect(`to get an array of users with length [${LIMIT_NUM}]`);
+        spec.When(`we want to find some users limiting the result to the first [${LIMIT_NUM}]`);
+        spec.WeExpect(`to get an array of users with length [${LIMIT_NUM}]`);
 
         const tr = await this._users!.find(undefined, { noCursorTimeout: false }).limit(LIMIT_NUM).toArray();
         const n = (tr) ? tr!.length : 0;
         r = n == LIMIT_NUM;
 
-        this.specWeGot(`[${n}] items`, r);
-        this.specResume();
+        spec.WeGot(`[${n}] items`, r);
+        spec.Resume();
     }
 
     async S04a_CountWithFilter() {
+        const spec = this.specifier;
         const GROUP_NAME = MOCK_USERS.many[2].group;
         const EXPECT_NUM = 2;
 
-        let r = this.specInit(this.S04a_CountWithFilter.name);
+        let r = spec.Init(this.S04a_CountWithFilter.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to count all the items in the collection of the group [${GROUP_NAME}]`);
-        this.specWeExpect(`to get [${EXPECT_NUM}] items`);
+        spec.When(`we want to count all the items in the collection of the group [${GROUP_NAME}]`);
+        spec.WeExpect(`to get [${EXPECT_NUM}] items`);
 
         const tr = await this.#countFiltered(this._users!, { group: GROUP_NAME });
         const n = (tr.ok) ? tr.ir! : 0;
         r = n == EXPECT_NUM
 
-        this.specWeGot(`[${n}]`, r);
-        this.specResume();
+        spec.WeGot(`[${n}]`, r);
+        spec.Resume();
     }
 
     async S04b_CountByAggregateWithSkipOption() {
+        const spec = this.specifier;
         const SKIP_NUM = 3;
         const EXPECT_NUM = MOCK_USERS.many.length + 1 - SKIP_NUM
 
-        let r = this.specInit(this.S04b_CountByAggregateWithSkipOption.name);
+        let r = spec.Init(this.S04b_CountByAggregateWithSkipOption.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want count the items in the collection skipping [${SKIP_NUM}] of them`);
-        this.specWeExpect(`to get [${EXPECT_NUM}]`);
+        spec.When(`we want count the items in the collection skipping [${SKIP_NUM}] of them`);
+        spec.WeExpect(`to get [${EXPECT_NUM}]`);
 
         const tr = await this.#countWithSkipOption(this._users!, SKIP_NUM);
         const n = (tr.ok) ? tr.ir : 0;
         r = n == EXPECT_NUM
 
-        this.specWeGot(`[${n}]`, r);
-        this.specResume();
+        spec.WeGot(`[${n}]`, r);
+        spec.Resume();
 
     }
 
     async S05a_UpdateSingle() {
+        const spec = this.specifier;
         const NEW_PWD = "newPassword";
 
-        let r = this.specInit(this.S05a_UpdateSingle.name);
+        let r = spec.Init(this.S05a_UpdateSingle.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to update the password of the user named ${MOCK_USERS.single.username}`);
-        this.specWeExpect(`to get the old [${MOCK_USERS.single.password}] and the new value [${NEW_PWD}]`);
+        spec.When(`we want to update the password of the user named ${MOCK_USERS.single.username}`);
+        spec.WeExpect(`to get the old [${MOCK_USERS.single.password}] and the new value [${NEW_PWD}]`);
 
         const tr = await this.#updateOne(this._users!, { username: MOCK_USERS.single.username });
         const n = tr.ok ? tr.ir!.modifiedCount : 0;
         r = n == 1;
 
-        this.specWeGot(`[${n}] items modified.`, r);
-        this.specResume();
+        spec.WeGot(`[${n}] items modified.`, r);
+        spec.Resume();
     }
 
     async S05b_UpdateMany() {
+        const spec = this.specifier;
         const NEW_GROUP = "newGroup";
         const OLD_GROUP = MOCK_USERS.many[2].group;
         const UPDATED_NUM = 2;
 
-        let r = this.specInit(this.S05b_UpdateMany.name);
+        let r = spec.Init(this.S05b_UpdateMany.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to update the group of the users in ${OLD_GROUP}`);
-        this.specWeExpect(`to get [${UPDATED_NUM}] records updated with the new value [${NEW_GROUP}]`);
+        spec.When(`we want to update the group of the users in ${OLD_GROUP}`);
+        spec.WeExpect(`to get [${UPDATED_NUM}] records updated with the new value [${NEW_GROUP}]`);
 
         const tr = await this.#updateMany(this._users!, { group: OLD_GROUP });
         const n = tr.ok ? tr.ir!.modifiedCount : 0;
         r = n == UPDATED_NUM;
 
-        this.specWeGot(`[${n}] items modified.`, r);
-        this.specResume();
+        spec.WeGot(`[${n}] items modified.`, r);
+        spec.Resume();
     }
 
     async S06a_DeleteSingleById() {
-
-        let r = this.specInit(this.S06a_DeleteSingleById.name);
+        const spec = this.specifier;
+        let r = spec.Init(this.S06a_DeleteSingleById.name, this.flags);
         if (!r) return;
 
         r = this._singleInsertResult !== undefined;
         if (!r) {
-            this.specSkip(
-                Uts.eApgUtsSpecRun.no,
+            spec.Skip(
                 `We need the result of ${this.S02a_InsertOne.name} to run this spec.`
             );
             return
         }
 
-        this.specWhen(`we want to delete one user into the test collection by object ID`);
-        this.specWeExpect(`to get the get [1] in the delete count result`);
+        spec.When(`we want to delete one user into the test collection by object ID`);
+        spec.WeExpect(`to get the get [1] in the delete count result`);
 
         const tr = await this.#deleteByID(this._users!, this._singleInsertResult!);
         const n = tr.ok ? tr.ir : 0;
         r = n == 1;
 
-        this.specWeGot(`[${n}] deletion`, r);
-        this.specResume();
+        spec.WeGot(`[${n}] deletion`, r);
+        spec.Resume();
 
     }
 
     async S06b_DeleteManyByFilter() {
+        const spec = this.specifier;
         const EXPECT_NUM = 2;
         const GROUP = MOCK_USERS.many[2].group;
         const FILTER = { group: "group3" };
 
-        let r = this.specInit(this.S06b_DeleteManyByFilter.name);
+        let r = spec.Init(this.S06b_DeleteManyByFilter.name, this.flags);
         if (!r) return;
 
-        this.specWhen(`we want to delete the users that are in the group [${GROUP}]`);
-        this.specWeExpect(`to get the get [${EXPECT_NUM}] in the delete count result`);
+        spec.When(`we want to delete the users that are in the group [${GROUP}]`);
+        spec.WeExpect(`to get the get [${EXPECT_NUM}] in the delete count result`);
 
         const tr = await this.#deleteByFilter(this._users!, FILTER);
         const n = tr.ok ? tr.ir : 0;
         r = n == EXPECT_NUM;
 
-        this.specWeGot(`[${n}] deletion`, r);
-        this.specResume();
+        spec.WeGot(`[${n}] deletion`, r);
+        spec.Resume();
     }
 
 
@@ -478,7 +494,8 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
      */
 
     async #insertOne(ausers: ApgUsersDbCollection) {
-        const r: { ir?: TApgMngInsertResult, im?: string, ok: boolean } = { ok: true };
+
+        const r: { ir?: Mng.TApgMngInsertResult, im?: string, ok: boolean } = { ok: true };
         try {
             r.ir = await ausers.insertOne(MOCK_USERS.single);
         }
@@ -490,7 +507,8 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
     }
 
     async #insertMany(ausers: ApgUsersDbCollection) {
-        const r: { ir?: TApgMngMultipleInsertResult, im?: string, ok: boolean } = { ok: true };
+
+        const r: { ir?: Mng.TApgMngMultipleInsertResult, im?: string, ok: boolean } = { ok: true };
         try {
             r.ir = await ausers.insertMany(MOCK_USERS.many);
         }
@@ -503,8 +521,9 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
 
     async #findByID(
         ausers: ApgUsersDbCollection,
-        auserId: { $oid: string; } | Bson.ObjectId,
+        auserId: { $oid: string; } | Mongo.Bson.ObjectId,
     ) {
+
         const filter = { _id: auserId };
         const r: { ir?: ApgUserSchema, im?: string, ok: boolean } = { ok: true };
         try {
@@ -522,7 +541,7 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
 
     async #findByFilter(
         ausers: ApgUsersDbCollection,
-        afilter: MongoFilter<ApgUserSchema>
+        afilter: Mongo.Filter<ApgUserSchema>
     ) {
         const r: { ir?: ApgUserSchema, im?: string, ok: boolean } = { ok: true };
         try {
@@ -540,7 +559,7 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
 
     async #deleteByID(
         ausers: ApgUsersDbCollection,
-        auserID: { $oid: string; } | Bson.ObjectId
+        auserID: { $oid: string; } | Mongo.Bson.ObjectId
     ) {
         const filter = { _id: auserID }
         const r: { ir?: number, im?: string, ok: boolean } = { ok: true };
@@ -558,7 +577,7 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
 
     async #deleteByFilter(
         ausers: ApgUsersDbCollection,
-        afilter: MongoFilter<ApgUserSchema>
+        afilter: Mongo.Filter<ApgUserSchema>
     ) {
         const r: { ir?: number, im?: string, ok: boolean } = { ok: true };
         try {
@@ -597,7 +616,7 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
 
     async #countFiltered(
         ausers: ApgUsersDbCollection,
-        afilter: MongoFilter<ApgUserSchema>
+        afilter: Mongo.Filter<ApgUserSchema>
     ) {
         const r: { ir?: number, im?: string, ok: boolean } = { ok: true };
         try {
@@ -638,9 +657,9 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
 
     async #updateOne(
         ausers: ApgUsersDbCollection,
-        afilter: MongoFilter<ApgUserSchema>
+        afilter: Mongo.Filter<ApgUserSchema>
     ) {
-        const r: { ir?: IApgMngUpdateOneResult, im?: string, ok: boolean } = { ok: true };
+        const r: { ir?: Mng.IApgMngUpdateOneResult, im?: string, ok: boolean } = { ok: true };
         const newVal = { $set: { username: "USERNAME1" } }
         try {
             r.ir = await ausers.updateOne(afilter, newVal);
@@ -656,9 +675,9 @@ export class ApgMngSpec extends Uts.ApgUtsSpecable {
 
     async #updateMany(
         ausers: ApgUsersDbCollection,
-        afilter: MongoFilter<ApgUserSchema>
+        afilter: Mongo.Filter<ApgUserSchema>
     ) {
-        const r: { ir?: IApgMngUpdateManyResult, im?: string, ok: boolean } = { ok: true };
+        const r: { ir?: Mng.IApgMngUpdateManyResult, im?: string, ok: boolean } = { ok: true };
         const newVal = { $set: { group: "GROUP2A" } };
         try {
             r.ir = await ausers.updateMany(afilter, newVal);

@@ -4,6 +4,6 @@
   },
   "tasks": {
     "test": "deno run -A --unstable --watch test.ts",
-    "cache": "deno cache --reload deps.ts"
+    "cache": "deno cache --reload ./test/deps.ts"
   }
 }

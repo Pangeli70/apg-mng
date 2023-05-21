@@ -1,32 +1,27 @@
 /** -----------------------------------------------------------------------
- * @module [Mng]
+ * @module [apg-mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.2 [APG 2022/10/04] Github Beta
- * @version 0.9.5 [APG 2023/02/14] Rst simplification 
+ * @version 0.9.5 [APG 2023/02/14] Rst simplification
+ * @version 0.9.7 [APG 2023/05/21] Separation of concerns lib/srv
  * ------------------------------------------------------------------------
  */
 
-import {
-  MongoClient,
-  MongoDatabase,
-  MongoConnOpts,
-  MongoFindOpts,
-  Rst
-} from "../../deps.ts";
+import { Mongo, Rst } from "../deps.ts";
 
 
 export abstract class ApgMngService {
 
-  protected connectOptions: MongoConnOpts | null = null;
+  protected connectOptions: Mongo.ConnectOptions | null = null;
 
-  protected client: MongoClient | null = null;
+  protected client: Mongo.MongoClient | null = null;
 
   protected dbName: string;
 
   /** Special find options settings for queries timeout if we are using Atlas */
-  protected findOptions: MongoFindOpts = {};
+  protected findOptions: Mongo.FindOptions = {};
 
-  protected mongoDb: MongoDatabase | null = null;
+  protected mongoDb: Mongo.Database | null = null;
 
   get FindOptions() {
     return this.findOptions;
@@ -54,7 +49,7 @@ export abstract class ApgMngService {
     this.dbName = adbName;
   }
 
-  initializeConnection(): Promise<Rst.IApgRst> {
+  initializeConnection() {
     return new Promise<Rst.IApgRst>(() => {
       throw new Error(`If you want to call [${this.initializeConnection.name}] method you must override the implementation.`)
     })

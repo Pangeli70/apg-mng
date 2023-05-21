@@ -1,15 +1,12 @@
 /** -----------------------------------------------------------------------
- * @module [Mng]
+ * @module [apg-mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.2 [APG 2022/10/04] Github Beta
+ * @version 0.9.7 [APG 2023/05/21] Separation of concerns lib/srv
  * ------------------------------------------------------------------------
  */
 
-import {
-  MongoClient,
-  Rst
-} from "../../deps.ts";
-
+import { Mongo, Rst } from "../deps.ts";
 import { ApgMngService } from "./ApgMngService.ts";
 
 export class ApgMngLocalService extends ApgMngService {
@@ -51,12 +48,12 @@ export class ApgMngLocalService extends ApgMngService {
       this.connectOptions == null,
       "Local connection options not provided"
     )
-    if (!r.ok) { 
+    if (!r.ok) {
       return r;
     }
 
-    if (this.client == null) { 
-      this.client = new MongoClient();
+    if (this.client == null) {
+      this.client = new Mongo.MongoClient();
     }
 
     try {
@@ -77,7 +74,7 @@ export class ApgMngLocalService extends ApgMngService {
       this.mongoDb,
       `MongoDB ${this.dbName} database name is invalid for current Local connection.`,
     );
-    
+
     return r;
 
   }

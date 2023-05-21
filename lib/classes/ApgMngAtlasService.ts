@@ -1,16 +1,14 @@
 /** -----------------------------------------------------------------------
- * @module [Mng]
+ * @module [apg-mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.2 [APG 2022/10/04] Github Beta
+ * @version 0.9.7 [APG 2023/05/21] Separation of concerns lib/srv
  * ------------------------------------------------------------------------
  */
 
-import {
-  MongoClient,
-  Rst
-} from "../../deps.ts";
+import { Mongo, Rst } from "../deps.ts";
+import { ApgMngService } from "./ApgMngService.ts";
 
-import { ApgMngService } from "./ApgMngService.ts"
 
 export class ApgMngAtlasService extends ApgMngService {
 
@@ -75,11 +73,11 @@ export class ApgMngAtlasService extends ApgMngService {
     if (!r.ok) return r;
 
     if (this.client == null) {
-      this.client = new MongoClient();
-    }
-    const shardHost = this.connectOptions!.servers[0].host;
+       this.client = new Mongo.MongoClient();
+     }
+     const shardHost = this.connectOptions!.servers[0].host;
 
-    console.log(`Using [${shardHost}] shard host`);
+     console.log(`Using [${shardHost}] shard host`);
 
     let error = true;
     let message = "";

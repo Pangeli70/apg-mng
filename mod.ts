@@ -1,21 +1,9 @@
 /** -----------------------------------------------------------------------
- * @module [Mng] Mongo Utilities
+ * @module [apg-mng] Mongo Utilities
  * @author [APG] ANGELI Paolo Giusto
+ * @version 0.9.2 [APG 2022/10/04] Github Beta
+ * @version 0.9.5 [APG 2023/02/14] Rst simplification
+ * @version 0.9.7 [APG 2023/05/21] Separation of concerns lib/srv
  * ------------------------------------------------------------------------
  */
-export type {
-    IApgMngUpdateOneResult,
-    IApgMngUpdateManyResult
-} from './src/interfaces/IApgMngUpdateResult.ts';
-
-export type {
-    TApgMngInsertResult,
-    TApgMngMultipleInsertResult
-} from './src/types/TApgMngInsertResult.ts';
-
-export { ApgMngService } from './src/classes/ApgMngService.ts';
-export { ApgMngLocalService } from './src/classes/ApgMngLocalService.ts';
-export { ApgMngAtlasService } from './src/classes/ApgMngAtlasService.ts';
-export { ApgMngConnector } from './src/classes/ApgMngConnector.ts';
-
-export { eApgMngMode } from './src/enums/eApgMngMode.ts';
+export * from "./lib/mod.ts"

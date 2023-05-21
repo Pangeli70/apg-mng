@@ -1,24 +1,20 @@
 /** -----------------------------------------------------------------------
- * @module [Mng]
+ * @module [apg-mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.2 [APG 2022/10/04] Github Beta
- * @version 0.9.5 [APG 2023/02/14] Rst simplification 
+ * @version 0.9.5 [APG 2023/02/14] Rst simplification
+ * @version 0.9.7 [APG 2023/05/21] Separation of concerns lib/srv
  * -----------------------------------------------------------------------
  */
 
-import {
-    MongoCollection,
-    DotEnv,
-    Uts,
-    Rst
-} from "../../deps.ts";
+import { Mongo, Uts, Rst } from "../deps.ts";
 import { ApgMngService } from "./ApgMngService.ts";
 import { ApgMngLocalService } from "./ApgMngLocalService.ts";
 import { ApgMngAtlasService } from "./ApgMngAtlasService.ts";
 import { eApgMngMode } from "../enums/eApgMngMode.ts";
 
 
-export class ApgMngConnector extends Uts.ApgUtsMeta {
+export class ApgMngConnector extends Uts.ApgUtsBaseService {
 
     static readonly DENO_RES_SIGNATURE = "{id:string, res:string}"
 
@@ -45,7 +41,14 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
     /**
      * @signature "{id:string, res:string}"
      */
-    async connect(amode: eApgMngMode, adbName: string) {
+    async connect(
+        amode: eApgMngMode,
+        adbName: string,
+        aatlasOptions?: {
+            shardName: string,
+            user: string,
+            password: string
+        }) {
 
         const p: { id: string; res: string }[] = [];
 
@@ -55,8 +58,6 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
             throw new Error("Mongo connection not closed")
         }
 
-        const env = DotEnv.config()
-
         if (amode == eApgMngMode.local) {
             this._mongoService = new ApgMngLocalService(adbName)
             this.#log("MongoDB Local connecting");
@@ -64,9 +65,9 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
         else {
             this._mongoService = new ApgMngAtlasService(
                 adbName,
-                env.atlasShard,
-                env.user,
-                env.password,
+                aatlasOptions?.shardName || "",
+                aatlasOptions?.user || "",
+                aatlasOptions?.password || ""
             )
             this.#log("MongoDB Atlas connecting")
         }
@@ -114,9 +115,9 @@ export class ApgMngConnector extends Uts.ApgUtsMeta {
         return r;
     }
 
-    getCollection<T>(acollectionName: string) {
+    getCollection<T extends Mongo.Document>(acollectionName: string) {
 
-        let r: MongoCollection<T> | null = null;
+        let r: Mongo.Collection<T> | null = null;
 
         if (!this._mongoService) return r;
 

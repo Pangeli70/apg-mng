@@ -1,11 +1,14 @@
 /** -----------------------------------------------------------------------
- * @module [Mng]
+ * @module [apg-mng]
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.4 [APG 2023/02/06]
+ * @version 0.9.7 [APG 2023/05/21] Separation of concerns lib/srv
  * ------------------------------------------------------------------------
  */
 
-/** Mongo DB Atlas Api */
+/** 
+ * Mongo DB Atlas API WIP
+ */
 export class ApgMngApiCollection {
 
     private _url: string;
