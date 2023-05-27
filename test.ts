@@ -10,7 +10,7 @@ import { eApgMngMode } from "./mod.ts";
 import { ApgMngSpec } from "./test/specs/ApgMngSpec.ts"
 
 
-// https://deno.land/std/dotenv/load
+// https://deno.land/std/dotenv/load autoload env file
 import "https://deno.land/std@0.188.0/dotenv/load.ts";
 
 

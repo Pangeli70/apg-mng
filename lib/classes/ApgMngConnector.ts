@@ -34,7 +34,7 @@ export class ApgMngConnector extends Uts.ApgUtsBaseService {
 
     #log(amessage: string) {
         if (this._logMode == Uts.eApgUtsLogMode.verbose) {
-            console.log(amessage)
+            console.log(this.CLASS_NAME + ": " + amessage)
         }
     }
 
@@ -45,7 +45,7 @@ export class ApgMngConnector extends Uts.ApgUtsBaseService {
         amode: eApgMngMode,
         adbName: string,
         aatlasOptions?: {
-            shardName: string,
+            mongoHost: string,
             user: string,
             password: string
         }) {
@@ -63,9 +63,10 @@ export class ApgMngConnector extends Uts.ApgUtsBaseService {
             this.#log("MongoDB Local connecting");
         }
         else {
+            
             this._mongoService = new ApgMngAtlasService(
                 adbName,
-                aatlasOptions?.shardName || "",
+                aatlasOptions?.mongoHost || "",
                 aatlasOptions?.user || "",
                 aatlasOptions?.password || ""
             )

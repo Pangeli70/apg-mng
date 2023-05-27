@@ -138,7 +138,7 @@ export class ApgMngSpec extends Spc.ApgSpcSpec {
 
         const options =
         {
-            shardName: Deno.env.get("shardName") || "",
+            mongoHost: Deno.env.get("mongoHost") || "",
             user: Deno.env.get("user") || "",
             password: Deno.env.get("password") || "",
         }

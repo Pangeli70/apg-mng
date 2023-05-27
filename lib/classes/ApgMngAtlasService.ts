@@ -15,13 +15,13 @@ export class ApgMngAtlasService extends ApgMngService {
 
   constructor(
     adbName: string,
-    aprimaryShardHost: string,
+    amongoHost: string,
     auserName: string,
     auserPwd: string,
   ) {
     super(adbName);
 
-    this.#setupAtlasConnection(aprimaryShardHost, auserName, auserPwd, adbName);
+    this.#setupAtlasConnection(amongoHost, auserName, auserPwd, adbName);
 
   }
 
@@ -33,26 +33,24 @@ export class ApgMngAtlasService extends ApgMngService {
 
   /** Setup Connection to Mongo DB Atlas
    * 
-   * @param aprimaryShardHost THIS MUST BE PRIMARY MASTER SHARD NODE!!
+   * @param amongoHost THIS MUST BE PRIMARY MASTER SHARD NODE!!
    * Verify Using Compass or Atlas web interface
    * @param auserName Store this on the Heroku private Env Vars
    * @param auserPwd  Store this on the Heroku private Env Vars
    * @param adbName Name of the database
    */
   #setupAtlasConnection(
-    aprimaryShardHost: string,
+    amongoHost: string,
     auserName: string,
     auserPwd: string,
     adbName: string,
   ) {
-
     this.findOptions = { noCursorTimeout: false }
     this.connectOptions = {
       db: adbName,
       tls: true,
       servers: [{
-        // THIS MUST BE PRIMARY MASTER SHARD NODE!!!!
-        host: aprimaryShardHost,
+        host: amongoHost,
         port: 27017
       }],
       credential: {
@@ -73,21 +71,29 @@ export class ApgMngAtlasService extends ApgMngService {
     if (!r.ok) return r;
 
     if (this.client == null) {
-       this.client = new Mongo.MongoClient();
-     }
-     const shardHost = this.connectOptions!.servers[0].host;
-
-     console.log(`Using [${shardHost}] shard host`);
-
+      this.client = new Mongo.MongoClient();
+    }
+    const host = this.connectOptions!.servers[0].host;
     let error = true;
     let message = "";
-    try {
-      await this.client.connect(this.connectOptions!);
-      error = false;
-    } catch (e) {
-      message = e.message;
-      // Force to close this connection
-      this.client.close();
+    const hostFragments = host.split(".");
+    for (let i = 0; i < 3; i++) {
+      const fragmentsCopy = [...hostFragments];
+      fragmentsCopy[0] += "-shard-00-0" + i.toString();
+      const shardHost = fragmentsCopy.join(".");
+      console.log(`Trying connection using [${shardHost}] shard host`);
+      this.connectOptions!.servers[0].host = shardHost;
+      try {
+        await this.client.connect(this.connectOptions!);
+        error = false;
+      } catch (e) {
+        message += "\n" + e.message;
+        // Force to close this connection
+        this.client.close();
+      }
+      if (error == false) {
+        break;
+      }
     }
 
     if (error) {
