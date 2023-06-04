@@ -148,7 +148,7 @@ export class ApgMngSpec extends Spc.ApgSpcSpec {
         if (!rst.ok) {
             r.message = "Impossibile to connect to database: " + rst.message;
         } else {
-            r = Rst.ApgRst.CheckPayload(rst, Mng.ApgMngConnector.DENO_RES_SIGNATURE);
+            r = Rst.ApgRst.CheckPayload(rst, Mng.ApgMngConnector.DENO_RESOURCES_SIGNATURE);
 
             this._users = this._connector.getCollection<ApgUserSchema>(COLLECTION_NAME);
             if (!this._users) {
@@ -165,7 +165,7 @@ export class ApgMngSpec extends Spc.ApgSpcSpec {
 
         let r = await super.mockEnd();
         const rst = this._connector.disconnect();
-        r = Rst.ApgRst.CheckPayload(rst, Mng.ApgMngConnector.DENO_RES_SIGNATURE);
+        r = Rst.ApgRst.CheckPayload(rst, Mng.ApgMngConnector.DENO_RESOURCES_SIGNATURE);
         r.message = "Mongo Db disconnection completed";
         return r;
 

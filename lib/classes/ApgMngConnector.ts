@@ -16,7 +16,7 @@ import { eApgMngMode } from "../enums/eApgMngMode.ts";
 
 export class ApgMngConnector extends Uts.ApgUtsBaseService {
 
-    static readonly DENO_RES_SIGNATURE = "{id:string, res:string}"
+    static readonly DENO_RESOURCES_SIGNATURE = "{id:string, res:string}"
 
     private static _connectionsNum = 0;
 
@@ -86,7 +86,7 @@ export class ApgMngConnector extends Uts.ApgUtsBaseService {
                 }
             }
             r.payload = {
-                signature: ApgMngConnector.DENO_RES_SIGNATURE,
+                signature: ApgMngConnector.DENO_RESOURCES_SIGNATURE,
                 data: p
             };
         }
@@ -108,7 +108,7 @@ export class ApgMngConnector extends Uts.ApgUtsBaseService {
                 }
             }
             r.payload = {
-                signature: ApgMngConnector.DENO_RES_SIGNATURE,
+                signature: ApgMngConnector.DENO_RESOURCES_SIGNATURE,
                 data: p
             };
         }

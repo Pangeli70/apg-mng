@@ -4,6 +4,7 @@
   },
   "tasks": {
     "test": "deno run -A --unstable --watch test.ts",
-    "cache": "deno cache --reload ./test/deps.ts"
+    "cacheLib": "deno cache --reload --lock-write ./lib/deps.ts",
+    "cacheTst": "deno cache --reload --lock-write ./test/deps.ts"
   }
 }
